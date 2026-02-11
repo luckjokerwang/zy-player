@@ -8,6 +8,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  ToastAndroid,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Song } from '../utils/types';
@@ -19,6 +20,7 @@ import { SongItem } from './SongItem';
 export const SearchBar: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isAddingAll, setIsAddingAll] = useState(false);
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
   const { setSearchList, playSong, addToQueue, addSongToFavList, favLists } = usePlayer();
 
@@ -53,6 +55,7 @@ export const SearchBar: React.FC = () => {
 
   const handleAddToQueue = (song: Song) => {
     addToQueue([song]);
+    ToastAndroid.show(`已添加: ${song.name}`, ToastAndroid.SHORT);
   };
 
   const handleAddToFav = (song: Song) => {
@@ -71,9 +74,16 @@ export const SearchBar: React.FC = () => {
     );
   };
 
-  const handlePlayAll = () => {
+  const handlePlayAll = async () => {
     if (searchResult && searchResult.songs.length > 0) {
-      addToQueue(searchResult.songs);
+      setIsAddingAll(true);
+      ToastAndroid.show(`正在添加 ${searchResult.songs.length} 首歌曲...`, ToastAndroid.SHORT);
+      try {
+        await addToQueue(searchResult.songs);
+        ToastAndroid.show(`已添加 ${searchResult.songs.length} 首歌曲到播放队列`, ToastAndroid.SHORT);
+      } finally {
+        setIsAddingAll(false);
+      }
     }
   };
 
@@ -109,9 +119,19 @@ export const SearchBar: React.FC = () => {
               {searchResult.title} ({searchResult.songs.length}首)
             </Text>
             {searchResult.songs.length > 0 && (
-              <TouchableOpacity onPress={handlePlayAll} style={styles.playAllButton}>
-                <Icon name="playlist-add" size={20} color={COLORS.primary} />
-                <Text style={styles.playAllText}>全部添加</Text>
+              <TouchableOpacity 
+                onPress={handlePlayAll} 
+                style={styles.playAllButton}
+                disabled={isAddingAll}
+              >
+                {isAddingAll ? (
+                  <ActivityIndicator size="small" color={COLORS.primary} />
+                ) : (
+                  <Icon name="playlist-add" size={20} color={COLORS.primary} />
+                )}
+                <Text style={styles.playAllText}>
+                  {isAddingAll ? '添加中...' : '全部添加'}
+                </Text>
               </TouchableOpacity>
             )}
           </View>

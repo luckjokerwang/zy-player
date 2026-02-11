@@ -1,6 +1,6 @@
 // Bilibili API URLs
 export const API = {
-  // 获取视频播放地址
+  PLAY_URL_BASE: 'https://api.bilibili.com/x/player/wbi/playurl',
   PLAY_URL: 'https://api.bilibili.com/x/player/playurl?cid={cid}&bvid={bvid}&qn=64&fnval=16',
   // BVID转CID
   BVID_TO_CID: 'https://api.bilibili.com/x/player/pagelist?bvid={bvid}&jsonp=jsonp',

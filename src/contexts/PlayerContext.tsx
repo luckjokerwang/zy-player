@@ -88,10 +88,10 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const lastPlayList = await storageManager.getLastPlayList();
       if (lastPlayList.length > 0) {
         setPlayingList(lastPlayList);
-        await PlayerService.addSongsToQueue(lastPlayList, true);
+        await PlayerService.addSongsToQueueFast(lastPlayList, true);
       } else if (lists.length > 0 && lists[0].songList.length > 0) {
         setPlayingList(lists[0].songList);
-        await PlayerService.addSongsToQueue(lists[0].songList, true);
+        await PlayerService.addSongsToQueueFast(lists[0].songList, true);
       }
       setIsInitialized(true);
     } catch (err) {

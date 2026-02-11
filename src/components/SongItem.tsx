@@ -61,7 +61,7 @@ export const SongItem: React.FC<SongItemProps> = ({
             style={styles.actionButton}
             onPress={() => onAddToQueue(song)}
           >
-            <Icon name="add" size={22} color={COLORS.textSecondary} />
+            <Icon name="queue-play-next" size={22} color={COLORS.textSecondary} />
           </TouchableOpacity>
         )}
         
@@ -70,7 +70,7 @@ export const SongItem: React.FC<SongItemProps> = ({
             style={styles.actionButton}
             onPress={() => onAddToFav(song)}
           >
-            <Icon name="playlist-add" size={22} color={COLORS.textSecondary} />
+            <Icon name="library-add" size={22} color={COLORS.textSecondary} />
           </TouchableOpacity>
         )}
         

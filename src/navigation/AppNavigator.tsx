@@ -9,6 +9,7 @@ import { FavScreen } from '../screens/FavScreen';
 import { PlayerScreen } from '../screens/PlayerScreen';
 import { LyricScreen } from '../screens/LyricScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { QueueScreen } from '../screens/QueueScreen';
 import { COLORS } from '../utils/constants';
 
 const Stack = createNativeStackNavigator();
@@ -91,6 +92,13 @@ export const AppNavigator: React.FC = () => {
         <Stack.Screen 
           name="Lyric" 
           component={LyricScreen}
+          options={{
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen 
+          name="Queue" 
+          component={QueueScreen}
           options={{
             animation: 'slide_from_right',
           }}

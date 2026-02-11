@@ -49,6 +49,20 @@ export const setupPlayer = async (): Promise<boolean> => {
   }
 };
 
+// 快速转换歌曲为Track（不获取URL，用于快速初始化）
+export const convertSongToTrackFast = (song: Song): Track => {
+  return {
+    id: song.id,
+    url: `https://placeholder.bilibili/${song.bvid}/${song.id}`, // 占位URL，播放时替换
+    title: song.name,
+    artist: song.singer,
+    artwork: song.cover,
+    duration: 0,
+    headers: BILIBILI_AUDIO_HEADERS,
+  };
+};
+
+// 完整转换歌曲为Track（获取真实URL）
 export const convertSongToTrack = async (song: Song): Promise<Track> => {
   const url = await fetchPlayUrl(song.bvid, song.id);
   return {
@@ -60,6 +74,20 @@ export const convertSongToTrack = async (song: Song): Promise<Track> => {
     duration: 0,
     headers: BILIBILI_AUDIO_HEADERS,
   };
+};
+
+// 快速添加歌曲到队列（不获取URL，用于初始化）
+export const addSongsToQueueFast = async (songs: Song[], clearQueue: boolean = false): Promise<void> => {
+  try {
+    if (clearQueue) {
+      await TrackPlayer.reset();
+    }
+
+    const tracks: Track[] = songs.map(song => convertSongToTrackFast(song));
+    await TrackPlayer.add(tracks);
+  } catch (error) {
+    console.error('Error adding songs to queue:', error);
+  }
 };
 
 export const addSongsToQueue = async (songs: Song[], clearQueue: boolean = false): Promise<void> => {

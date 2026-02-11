@@ -1,5 +1,6 @@
 import { API } from '../utils/constants';
 import { Song, VideoInfo, LyricOption } from '../utils/types';
+import { signWbiParams } from '../utils/wbi';
 
 // B站API请求需要的headers
 const BILIBILI_HEADERS = {
@@ -42,13 +43,31 @@ export const fetchVideoInfo = async (bvid: string): Promise<VideoInfo | null> =>
 
 export const fetchPlayUrl = async (bvid: string, cid: string): Promise<string | null> => {
   try {
-    const url = API.PLAY_URL.replace('{bvid}', bvid).replace('{cid}', cid);
+    const params = {
+      bvid: bvid,
+      cid: cid,
+      qn: 64,
+      fnval: 16,
+      fnver: 0,
+      fourk: 1,
+    };
+    
+    const signedQuery = await signWbiParams(params);
+    const url = `${API.PLAY_URL_BASE}?${signedQuery}`;
+    
+    console.log('Fetching play URL with WBI sign:', url);
+    
     const response = await fetch(url, {
       headers: BILIBILI_HEADERS,
     });
-    const json = await response.json();
+    const text = await response.text();
+    if (text.startsWith('<') || text.startsWith('<!')) {
+      console.error('fetchPlayUrl returned HTML instead of JSON - API blocked or network issue');
+      return null;
+    }
+    const json = JSON.parse(text);
     if (json.code !== 0) {
-      console.error('Error fetching play url:', json.message);
+      console.error('Error fetching play url:', json.code, json.message);
       return null;
     }
     return json.data.dash?.audio?.[0]?.baseUrl || null;

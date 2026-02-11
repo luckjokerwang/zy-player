@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
 import { usePlayer } from '../contexts/PlayerContext';
 import { COLORS, PLAY_MODES, PlayMode } from '../utils/constants';
 
@@ -73,6 +74,7 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({ onPress }) => {
 };
 
 export const FullPlayer: React.FC = () => {
+  const navigation = useNavigation<any>();
   const {
     currentSong,
     isPlaying,
@@ -141,7 +143,7 @@ export const FullPlayer: React.FC = () => {
           <Icon name="skip-next" size={40} color={COLORS.text} />
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.controlButton}>
+        <TouchableOpacity style={styles.controlButton} onPress={() => navigation.navigate('Queue')}>
           <Icon name="queue-music" size={28} color={COLORS.textSecondary} />
         </TouchableOpacity>
       </View>
