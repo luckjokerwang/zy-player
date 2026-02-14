@@ -1,8 +1,22 @@
 {
   "name": "ZiyunPlayer",
   "displayName": "子云音播",
-  "version": "1.0.0",
-  "description": "B站第三方音频播放器 - Bilibili Audio Player",
+  "version": "1.0.2",
+  "description": "子云音播 - B站第三方音频播放器 | Ziyun Player - Bilibili Audio Player",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luckjokerwang/zy-player"
+  },
+  "keywords": [
+    "bilibili",
+    "audio",
+    "player",
+    "music",
+    "react-native",
+    "android"
+  ],
+  "author": "luckjokerwang",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "android": "react-native run-android",

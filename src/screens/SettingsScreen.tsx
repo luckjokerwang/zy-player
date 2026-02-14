@@ -126,12 +126,47 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) =>
         
         <View style={styles.item}>
           <Icon name="info-outline" size={24} color={COLORS.textSecondary} />
-          <Text style={styles.itemText}>版本 1.0.0</Text>
+          <Text style={styles.itemText}>版本 1.0.2</Text>
         </View>
 
         <View style={styles.item}>
           <Icon name="code" size={24} color={COLORS.textSecondary} />
           <Text style={styles.itemText}>基于 Azusa-Player 开发</Text>
+        </View>
+
+        <View style={styles.item}>
+          <Icon name="link" size={24} color={COLORS.textSecondary} />
+          <Text style={styles.itemText}>GitHub: luckjokerwang/zy-player</Text>
+        </View>
+
+        <View style={styles.item}>
+          <Icon name="developer-mode" size={24} color={COLORS.textSecondary} />
+          <Text style={styles.itemText}>React Native + TypeScript</Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>免责声明</Text>
+        
+        <View style={styles.item}>
+          <Icon name="security" size={24} color={COLORS.textSecondary} />
+          <View style={styles.disclaimerContainer}>
+            <Text style={styles.disclaimerText}>
+              • 本应用为第三方B站音频播放器
+            </Text>
+            <Text style={styles.disclaimerText}>
+              • 仅用于个人学习和交流目的
+            </Text>
+            <Text style={styles.disclaimerText}>
+              • 不涉及任何商业用途
+            </Text>
+            <Text style={styles.disclaimerText}>
+              • 音频资源来自Bilibili公开API
+            </Text>
+            <Text style={styles.disclaimerText}>
+              • 请尊重版权，合理使用
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -266,6 +301,16 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: 14,
     lineHeight: 22,
+  },
+  disclaimerContainer: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  disclaimerText: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 4,
   },
   modalOverlay: {
     flex: 1,
