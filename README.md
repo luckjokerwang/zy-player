@@ -1,97 +1,236 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# 子云音播 (Ziyun Player)
 
-# Getting Started
+[English](#english) | [中文](#中文)
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+<a id="english"></a>
+## English
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### Ziyun Player - Bilibili Audio Player
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+A third-party Bilibili audio player built with React Native and TypeScript.
 
-```sh
-# Using npm
+### Features
+
+- 🎵 **Audio Playback**: Play Bilibili audio content
+- 📱 **Cross-Platform**: Android support (iOS coming soon)
+- 🔍 **Multiple Search**: Support for BV numbers, playlist IDs, collections
+- 💾 **Data Management**: Export/import playlist data
+- 🎨 **Modern UI**: Clean and intuitive interface
+- 🔄 **WBI Signature**: Fixed Bilibili WBI signature for API calls
+
+### Quick Start
+
+#### Prerequisites
+- Node.js >= 20
+- Android Studio
+- React Native CLI
+
+#### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/luckjokerwang/zy-player.git
+cd zy-player
+
+# Install dependencies
+npm install
+
+# Start Metro
 npm start
 
-# OR using Yarn
-yarn start
+# Build for Android
+npm run android
 ```
 
-## Step 2: Build and run your app
+#### Build APK
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
+```bash
+# Build debug APK
 npm run android
 
-# OR using Yarn
-yarn android
+# Or build directly from Android directory
+cd android && ./gradlew assembleDebug
 ```
 
-### iOS
+### Usage
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+#### Search Types
+- **BV Number**: Video BV ID (e.g., `BV1wr4y1v7TA`)
+- **Playlist ID**: Public playlist ID (e.g., `1793186881`)
+- **Collection**: Full URL
+  - Collection: `channel/collectiondetail?sid=xxx`
+  - Series: `channel/seriesdetail?sid=xxx`
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+#### Data Management
+- Export playlist data as JSON file
+- Import previously exported data
+- Automatic backup functionality
 
-```sh
-bundle install
+### Technical Details
+
+- **Framework**: React Native 0.83.1
+- **Language**: TypeScript
+- **Navigation**: React Navigation
+- **Audio**: React Native Track Player
+- **State Management**: React Context API
+- **Storage**: Async Storage
+
+### Project Structure
+
+```
+src/
+├── api/           # Bilibili API integration
+├── components/    # Reusable UI components
+├── contexts/      # React Context providers
+├── screens/       # App screens
+├── services/      # Business logic services
+├── storage/       # Data storage management
+└── utils/         # Utility functions
 ```
 
-Then, and every time you update your native dependencies, run:
+### Development
 
-```sh
-bundle exec pod install
+#### Key Files
+- `src/api/bilibili.ts` - Bilibili API integration with WBI signature
+- `src/utils/wbi.ts` - WBI signature implementation
+- `src/screens/` - Application screens
+- `src/components/` - UI components
+
+#### Recent Updates
+- **v1.0.2**: Updated app icon, enhanced about page, added disclaimer
+- **v1.0.1**: Fixed Bilibili WBI signature for API calls
+- **v1.0.0**: Initial release with basic audio playback
+
+### Disclaimer
+
+This application is a third-party Bilibili audio player developed for personal learning and communication purposes only. It does not involve any commercial use. All audio resources are obtained through Bilibili's public APIs. Please respect copyright and use responsibly.
+
+### License
+
+MIT License
+
+---
+
+<a id="中文"></a>
+## 中文
+
+### 子云音播 - B站第三方音频播放器
+
+基于 React Native 和 TypeScript 开发的 B站第三方音频播放器。
+
+### 功能特性
+
+- 🎵 **音频播放**: 播放B站音频内容
+- 📱 **跨平台支持**: Android支持（iOS即将推出）
+- 🔍 **多种搜索**: 支持BV号、收藏夹ID、合集搜索
+- 💾 **数据管理**: 导出/导入歌单数据
+- 🎨 **现代界面**: 简洁直观的用户界面
+- 🔄 **WBI签名**: 修复B站WBI签名，确保API调用正常
+
+### 快速开始
+
+#### 环境要求
+- Node.js >= 20
+- Android Studio
+- React Native CLI
+
+#### 安装步骤
+
+```bash
+# 克隆仓库
+git clone https://github.com/luckjokerwang/zy-player.git
+cd zy-player
+
+# 安装依赖
+npm install
+
+# 启动 Metro
+npm start
+
+# 构建 Android 应用
+npm run android
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+#### 构建 APK
 
-```sh
-# Using npm
-npm run ios
+```bash
+# 构建调试版 APK
+npm run android
 
-# OR using Yarn
-yarn ios
+# 或直接从 Android 目录构建
+cd android && ./gradlew assembleDebug
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+### 使用说明
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+#### 搜索类型
+- **BV号**: 视频BV号 (如 `BV1wr4y1v7TA`)
+- **收藏夹ID**: 公开收藏夹ID (如 `1793186881`)
+- **合集**: 完整URL
+  - Collection: `channel/collectiondetail?sid=xxx`
+  - Series: `channel/seriesdetail?sid=xxx`
 
-## Step 3: Modify your app
+#### 数据管理
+- 将歌单数据导出为JSON文件
+- 导入之前导出的数据
+- 自动备份功能
 
-Now that you have successfully run the app, let's make changes!
+### 技术细节
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+- **框架**: React Native 0.83.1
+- **语言**: TypeScript
+- **导航**: React Navigation
+- **音频**: React Native Track Player
+- **状态管理**: React Context API
+- **存储**: Async Storage
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+### 项目结构
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+```
+src/
+├── api/           # B站API集成
+├── components/    # 可复用UI组件
+├── contexts/      # React Context提供者
+├── screens/       # 应用页面
+├── services/      # 业务逻辑服务
+├── storage/       # 数据存储管理
+└── utils/         # 工具函数
+```
 
-## Congratulations! :tada:
+### 开发信息
 
-You've successfully run and modified your React Native App. :partying_face:
+#### 关键文件
+- `src/api/bilibili.ts` - B站API集成，包含WBI签名
+- `src/utils/wbi.ts` - WBI签名实现
+- `src/screens/` - 应用页面
+- `src/components/` - UI组件
 
-### Now what?
+#### 近期更新
+- **v1.0.2**: 更新应用图标，增强关于页面，添加免责声明
+- **v1.0.1**: 修复B站WBI签名，解决API调用问题
+- **v1.0.0**: 初始版本，包含基础音频播放功能
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+### 免责声明
 
-# Troubleshooting
+本应用为第三方B站音频播放器，仅用于个人学习和交流目的，不涉及任何商业用途。音频资源来自Bilibili公开API，请尊重版权，合理使用。
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+### 许可证
 
-# Learn More
+MIT 许可证
 
-To learn more about React Native, take a look at the following resources:
+---
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+### 下载
+
+最新版本 APK: [zy-player.apk](android/app/build/outputs/apk/debug/zy-player.apk)
+
+### 开发者
+
+- **GitHub**: [luckjokerwang](https://github.com/luckjokerwang)
+- **项目地址**: [zy-player](https://github.com/luckjokerwang/zy-player)
+
+### 技术支持
+
+如有问题或建议，请通过GitHub Issues提交。
