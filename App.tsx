@@ -4,11 +4,18 @@
  */
 
 import React from 'react';
-import { StatusBar, StyleSheet, View, Text, ActivityIndicator } from 'react-native';
+import {
+  StatusBar,
+  StyleSheet,
+  View,
+  Text,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PlayerProvider, usePlayer } from './src/contexts/PlayerContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { COLORS } from './src/utils/constants';
 
 function AppContent() {
@@ -32,7 +39,11 @@ function AppContent() {
     );
   }
 
-  return <AppNavigator />;
+  return (
+    <ErrorBoundary>
+      <AppNavigator />
+    </ErrorBoundary>
+  );
 }
 
 function App(): React.JSX.Element {
