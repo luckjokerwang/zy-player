@@ -4,6 +4,18 @@ import { STORAGE_KEYS, DEFAULT_BVID } from '../utils/constants';
 import { Song, FavList, PlayerSettings, LyricMapping } from '../utils/types';
 import { getSongListFromBVID } from '../api/bilibili';
 
+// Type definition for exported storage data structure
+interface StorageExportData {
+  [key: string]:
+    | FavList
+    | Song[]
+    | PlayerSettings
+    | LyricMapping[]
+    | string[]
+    | Song
+    | unknown;
+}
+
 export class StorageManager {
   async initFavLists(): Promise<FavList[]> {
     try {
@@ -65,7 +77,8 @@ export class StorageManager {
 
     await this.setItem(newFavList.info.id, newFavList);
 
-    const favListIds = (await this.getItem<string[]>(STORAGE_KEYS.MY_FAV_LIST)) || [];
+    const favListIds =
+      (await this.getItem<string[]>(STORAGE_KEYS.MY_FAV_LIST)) || [];
     favListIds.push(newFavList.info.id);
     await this.setItem(STORAGE_KEYS.MY_FAV_LIST, favListIds);
 
@@ -75,7 +88,8 @@ export class StorageManager {
   async deleteFavList(id: string): Promise<void> {
     await AsyncStorage.removeItem(id);
 
-    const favListIds = (await this.getItem<string[]>(STORAGE_KEYS.MY_FAV_LIST)) || [];
+    const favListIds =
+      (await this.getItem<string[]>(STORAGE_KEYS.MY_FAV_LIST)) || [];
     const newIds = favListIds.filter(favId => favId !== id);
     await this.setItem(STORAGE_KEYS.MY_FAV_LIST, newIds);
   }
@@ -95,7 +109,10 @@ export class StorageManager {
     }
   }
 
-  async removeSongFromFavList(favListId: string, songId: string): Promise<void> {
+  async removeSongFromFavList(
+    favListId: string,
+    songId: string,
+  ): Promise<void> {
     const favList = await this.getItem<FavList>(favListId);
     if (favList) {
       favList.songList = favList.songList.filter(s => s.id !== songId);
@@ -112,7 +129,9 @@ export class StorageManager {
   }
 
   async getPlayerSettings(): Promise<PlayerSettings> {
-    const settings = await this.getItem<PlayerSettings>(STORAGE_KEYS.PLAYER_SETTINGS);
+    const settings = await this.getItem<PlayerSettings>(
+      STORAGE_KEYS.PLAYER_SETTINGS,
+    );
     return settings || { playMode: 'order', defaultVolume: 0.5 };
   }
 
@@ -121,12 +140,17 @@ export class StorageManager {
   }
 
   async getLyricDetail(songId: string): Promise<LyricMapping | undefined> {
-    const mappings = (await this.getItem<LyricMapping[]>(STORAGE_KEYS.LYRIC_MAPPING)) || [];
+    const mappings =
+      (await this.getItem<LyricMapping[]>(STORAGE_KEYS.LYRIC_MAPPING)) || [];
     return mappings.find(m => m.id === songId);
   }
 
-  async setLyricDetail(songId: string, lyricInfo: { songMid: string; label: string }): Promise<void> {
-    const mappings = (await this.getItem<LyricMapping[]>(STORAGE_KEYS.LYRIC_MAPPING)) || [];
+  async setLyricDetail(
+    songId: string,
+    lyricInfo: { songMid: string; label: string },
+  ): Promise<void> {
+    const mappings =
+      (await this.getItem<LyricMapping[]>(STORAGE_KEYS.LYRIC_MAPPING)) || [];
     const existingIndex = mappings.findIndex(m => m.id === songId);
 
     const newMapping: LyricMapping = {
@@ -145,7 +169,8 @@ export class StorageManager {
   }
 
   async setLyricOffset(songId: string, offset: number): Promise<void> {
-    const mappings = (await this.getItem<LyricMapping[]>(STORAGE_KEYS.LYRIC_MAPPING)) || [];
+    const mappings =
+      (await this.getItem<LyricMapping[]>(STORAGE_KEYS.LYRIC_MAPPING)) || [];
     const existingIndex = mappings.findIndex(m => m.id === songId);
 
     if (existingIndex !== -1) {
@@ -158,11 +183,16 @@ export class StorageManager {
     try {
       const keys = await AsyncStorage.getAllKeys();
       const pairs = await AsyncStorage.multiGet(keys);
-      const data: Record<string, any> = {};
+      const data: StorageExportData = {};
 
       for (const [key, value] of pairs) {
         if (value) {
-          data[key] = JSON.parse(value);
+          data[key] = JSON.parse(value) as
+            | FavList
+            | Song[]
+            | PlayerSettings
+            | LyricMapping[]
+            | string[];
         }
       }
 
@@ -175,11 +205,90 @@ export class StorageManager {
 
   async importData(jsonString: string): Promise<void> {
     try {
-      const data = JSON.parse(jsonString);
-      await AsyncStorage.clear();
+      const data = JSON.parse(jsonString) as StorageExportData;
 
-      for (const [key, value] of Object.entries(data)) {
-        await AsyncStorage.setItem(key, JSON.stringify(value));
+      const existingFavListIds =
+        (await this.getItem<string[]>(STORAGE_KEYS.MY_FAV_LIST)) || [];
+      const importedFavListIds =
+        (data[STORAGE_KEYS.MY_FAV_LIST] as string[]) || [];
+
+      const existingTitleToId = new Map<string, string>();
+      for (const id of existingFavListIds) {
+        const favList = await this.getItem<FavList>(id);
+        if (favList) {
+          existingTitleToId.set(favList.info.title, id);
+        }
+      }
+
+      const mergedIds = [...existingFavListIds];
+
+      for (const importedId of importedFavListIds) {
+        const importedFavList = data[importedId] as FavList | undefined;
+        if (!importedFavList) continue;
+
+        const matchingExistingId = existingTitleToId.get(
+          importedFavList.info.title,
+        );
+
+        if (matchingExistingId) {
+          const existingFavList = await this.getItem<FavList>(
+            matchingExistingId,
+          );
+          if (existingFavList) {
+            const existingSongIds = new Set(
+              existingFavList.songList.map(s => s.id),
+            );
+            const newSongs = importedFavList.songList.filter(
+              s => !existingSongIds.has(s.id),
+            );
+            if (newSongs.length > 0) {
+              existingFavList.songList = [
+                ...existingFavList.songList,
+                ...newSongs,
+              ];
+              await this.setItem(matchingExistingId, existingFavList);
+            }
+          }
+        } else {
+          const newId = 'FavList-' + uuidv4();
+          const newFavList: FavList = {
+            info: { id: newId, title: importedFavList.info.title },
+            songList: importedFavList.songList || [],
+          };
+          await this.setItem(newId, newFavList);
+          mergedIds.push(newId);
+          existingTitleToId.set(importedFavList.info.title, newId);
+        }
+      }
+
+      await this.setItem(STORAGE_KEYS.MY_FAV_LIST, mergedIds);
+
+      if (data[STORAGE_KEYS.LYRIC_MAPPING]) {
+        const existingMappings =
+          (await this.getItem<LyricMapping[]>(STORAGE_KEYS.LYRIC_MAPPING)) ||
+          [];
+        const importedMappings: LyricMapping[] =
+          (data[STORAGE_KEYS.LYRIC_MAPPING] as LyricMapping[]) || [];
+        const existingMappingIds = new Set(existingMappings.map(m => m.id));
+        const newMappings = importedMappings.filter(
+          m => !existingMappingIds.has(m.id),
+        );
+        await this.setItem(STORAGE_KEYS.LYRIC_MAPPING, [
+          ...existingMappings,
+          ...newMappings,
+        ]);
+      }
+
+      if (data[STORAGE_KEYS.PLAYER_SETTINGS]) {
+        const existingSettings = await this.getItem<PlayerSettings>(
+          STORAGE_KEYS.PLAYER_SETTINGS,
+        );
+        if (!existingSettings) {
+          await this.setItem(
+            STORAGE_KEYS.PLAYER_SETTINGS,
+            data[STORAGE_KEYS.PLAYER_SETTINGS] as PlayerSettings,
+          );
+        }
       }
     } catch (error) {
       console.error('Error importing data:', error);
@@ -197,7 +306,7 @@ export class StorageManager {
     }
   }
 
-  private async setItem(key: string, value: any): Promise<void> {
+  private async setItem<T>(key: string, value: T): Promise<void> {
     try {
       await AsyncStorage.setItem(key, JSON.stringify(value));
     } catch (error) {

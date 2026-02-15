@@ -1,5 +1,4 @@
 import TrackPlayer, {
-  Event,
   RepeatMode,
   Capability,
   AppKilledPlaybackBehavior,
@@ -8,12 +7,12 @@ import TrackPlayer, {
 } from 'react-native-track-player';
 import { Song } from '../utils/types';
 import { fetchPlayUrl } from '../api/bilibili';
-import { PLAY_MODES, PlayMode } from '../utils/constants';
-
-const BILIBILI_AUDIO_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  'Referer': 'https://www.bilibili.com',
-};
+import {
+  PLAY_MODES,
+  PlayMode,
+  BILIBILI_HEADERS,
+  createPlaceholderUrl,
+} from '../utils/constants';
 
 let isPlayerInitialized = false;
 
@@ -49,20 +48,18 @@ export const setupPlayer = async (): Promise<boolean> => {
   }
 };
 
-// 快速转换歌曲为Track（不获取URL，用于快速初始化）
 export const convertSongToTrackFast = (song: Song): Track => {
   return {
     id: song.id,
-    url: `https://placeholder.bilibili/${song.bvid}/${song.id}`, // 占位URL，播放时替换
+    url: createPlaceholderUrl(song.bvid, song.id),
     title: song.name,
     artist: song.singer,
     artwork: song.cover,
     duration: 0,
-    headers: BILIBILI_AUDIO_HEADERS,
+    headers: BILIBILI_HEADERS,
   };
 };
 
-// 完整转换歌曲为Track（获取真实URL）
 export const convertSongToTrack = async (song: Song): Promise<Track> => {
   const url = await fetchPlayUrl(song.bvid, song.id);
   return {
@@ -72,12 +69,15 @@ export const convertSongToTrack = async (song: Song): Promise<Track> => {
     artist: song.singer,
     artwork: song.cover,
     duration: 0,
-    headers: BILIBILI_AUDIO_HEADERS,
+    headers: BILIBILI_HEADERS,
   };
 };
 
 // 快速添加歌曲到队列（不获取URL，用于初始化）
-export const addSongsToQueueFast = async (songs: Song[], clearQueue: boolean = false): Promise<void> => {
+export const addSongsToQueueFast = async (
+  songs: Song[],
+  clearQueue: boolean = false,
+): Promise<void> => {
   try {
     if (clearQueue) {
       await TrackPlayer.reset();
@@ -90,7 +90,10 @@ export const addSongsToQueueFast = async (songs: Song[], clearQueue: boolean = f
   }
 };
 
-export const addSongsToQueue = async (songs: Song[], clearQueue: boolean = false): Promise<void> => {
+export const addSongsToQueue = async (
+  songs: Song[],
+  clearQueue: boolean = false,
+): Promise<void> => {
   try {
     if (clearQueue) {
       await TrackPlayer.reset();
