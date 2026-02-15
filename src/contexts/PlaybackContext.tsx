@@ -95,9 +95,11 @@ export const PlaybackProvider: React.FC<{ children: ReactNode }> = ({
       if (lastPlayList.length > 0) {
         setPlayingList(lastPlayList);
         await PlayerService.addSongsToQueueFast(lastPlayList, true);
+        await PlayerService.playTrack(0);
       } else if (lists.length > 0 && lists[0].songList.length > 0) {
         setPlayingList(lists[0].songList);
         await PlayerService.addSongsToQueueFast(lists[0].songList, true);
+        await PlayerService.playTrack(0);
       }
       setIsInitialized(true);
     } catch (err) {

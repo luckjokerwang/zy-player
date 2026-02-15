@@ -1,76 +1,52 @@
-import TrackPlayer, { Event, RepeatMode } from 'react-native-track-player';
+import TrackPlayer, {
+  Event,
+  RepeatMode,
+  State,
+} from 'react-native-track-player';
 import { ToastAndroid } from 'react-native';
-import { fetchPlayUrl } from '../api/bilibili';
-import {
-  BILIBILI_HEADERS,
-  isPlaceholderUrl,
-  parsePlaceholderUrl,
-} from '../utils/constants';
+import * as PlayerService from './PlayerService';
 
 export default async function PlaybackService() {
-  TrackPlayer.addEventListener(Event.RemotePlay, () => TrackPlayer.play());
+  ToastAndroid.show('[PlaybackService] 启动', ToastAndroid.SHORT);
 
-  TrackPlayer.addEventListener(Event.RemotePause, () => TrackPlayer.pause());
+  TrackPlayer.addEventListener(Event.RemotePlay, async () => {
+    ToastAndroid.show('RemotePlay', ToastAndroid.SHORT);
+    await PlayerService.togglePlayPause();
+  });
 
-  TrackPlayer.addEventListener(Event.RemoteStop, () => TrackPlayer.stop());
+  TrackPlayer.addEventListener(Event.RemotePause, () => {
+    ToastAndroid.show('RemotePause', ToastAndroid.SHORT);
+    TrackPlayer.pause();
+  });
 
-  TrackPlayer.addEventListener(Event.RemoteNext, () =>
-    TrackPlayer.skipToNext(),
-  );
+  // Android 12+ / Vivo / MIUI 设备发送合并的 PLAY_PAUSE 事件
+  TrackPlayer.addEventListener(Event.RemotePlayPause, async () => {
+    ToastAndroid.show('RemotePlayPause', ToastAndroid.SHORT);
+    const playbackState = await TrackPlayer.getPlaybackState();
+    if (playbackState.state === State.Playing) {
+      TrackPlayer.pause();
+    } else {
+      await PlayerService.togglePlayPause();
+    }
+  });
 
-  TrackPlayer.addEventListener(Event.RemotePrevious, () =>
-    TrackPlayer.skipToPrevious(),
-  );
+  TrackPlayer.addEventListener(Event.RemoteStop, () => {
+    ToastAndroid.show('RemoteStop', ToastAndroid.SHORT);
+    TrackPlayer.stop();
+  });
+
+  TrackPlayer.addEventListener(Event.RemoteNext, async () => {
+    ToastAndroid.show('RemoteNext', ToastAndroid.SHORT);
+    await PlayerService.skipToNext();
+  });
+
+  TrackPlayer.addEventListener(Event.RemotePrevious, async () => {
+    ToastAndroid.show('RemotePrevious', ToastAndroid.SHORT);
+    await PlayerService.skipToPrevious();
+  });
 
   TrackPlayer.addEventListener(Event.RemoteSeek, event =>
     TrackPlayer.seekTo(event.position),
-  );
-
-  TrackPlayer.addEventListener(
-    Event.PlaybackActiveTrackChanged,
-    async event => {
-      if (event.track && isPlaceholderUrl(event.track.url)) {
-        const parsed = parsePlaceholderUrl(event.track.url!);
-        if (!parsed) return;
-
-        try {
-          const realUrl = await fetchPlayUrl(parsed.bvid, parsed.cid);
-          if (realUrl && event.index !== undefined) {
-            const queue = await TrackPlayer.getQueue();
-            if (queue[event.index]) {
-              await TrackPlayer.remove(event.index);
-              await TrackPlayer.add(
-                {
-                  ...queue[event.index],
-                  url: realUrl,
-                  headers: BILIBILI_HEADERS,
-                },
-                event.index,
-              );
-              await TrackPlayer.skip(event.index);
-              await TrackPlayer.play();
-            }
-          } else {
-            ToastAndroid.show(
-              '无法获取播放地址，跳到下一曲',
-              ToastAndroid.SHORT,
-            );
-            const queue = await TrackPlayer.getQueue();
-            if (queue.length > 1) {
-              await TrackPlayer.skipToNext();
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching real URL:', error);
-          ToastAndroid.show('播放出错，跳到下一曲', ToastAndroid.SHORT);
-          try {
-            await TrackPlayer.skipToNext();
-          } catch (skipError) {
-            console.error('Failed to skip after playback error:', skipError);
-          }
-        }
-      }
-    },
   );
 
   TrackPlayer.addEventListener(Event.PlaybackQueueEnded, async event => {
@@ -81,12 +57,19 @@ export default async function PlaybackService() {
       }
       const queue = await TrackPlayer.getQueue();
       if (queue.length > 0) {
-        await TrackPlayer.skip(0);
+        await PlayerService.playTrack(0);
       }
     }
   });
 
-  TrackPlayer.addEventListener(Event.PlaybackError, event => {
+  TrackPlayer.addEventListener(Event.PlaybackError, async event => {
     console.error('Playback error:', event.message);
+    const state = await TrackPlayer.getPlaybackState();
+    if (state.state === State.Error) {
+      const activeIndex = await TrackPlayer.getActiveTrackIndex();
+      if (activeIndex !== undefined && activeIndex !== null) {
+        await PlayerService.playTrack(activeIndex);
+      }
+    }
   });
 }

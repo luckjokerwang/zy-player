@@ -204,16 +204,41 @@ describe('PlayerService', () => {
   });
 
   describe('playTrack', () => {
-    it('should skip to index and play', async () => {
-      await PlayerService.playTrack(2);
+    it('should resolve placeholder and play', async () => {
+      const placeholderTrack = {
+        id: mockSong.id,
+        url: 'https://placeholder.bilibili/BV1234567890/test-cid-123',
+        title: mockSong.name,
+        artist: mockSong.singer,
+      };
+      (TrackPlayer.getQueue as jest.Mock).mockResolvedValue([placeholderTrack]);
+      mockFetchPlayUrl.mockResolvedValueOnce('https://real-audio.mp3');
 
-      expect(TrackPlayer.skip).toHaveBeenCalledWith(2);
+      await PlayerService.playTrack(0);
+
+      expect(mockFetchPlayUrl).toHaveBeenCalledWith(
+        'BV1234567890',
+        'test-cid-123',
+      );
+      expect(TrackPlayer.remove).toHaveBeenCalledWith(0);
+      expect(TrackPlayer.add).toHaveBeenCalled();
+      expect(TrackPlayer.skip).toHaveBeenCalledWith(0);
       expect(TrackPlayer.play).toHaveBeenCalled();
     });
 
+    it('should play directly when URL is not a placeholder', async () => {
+      (TrackPlayer.getQueue as jest.Mock).mockResolvedValue([mockTrack]);
+
+      await PlayerService.playTrack(0);
+
+      expect(TrackPlayer.skip).toHaveBeenCalledWith(0);
+      expect(TrackPlayer.play).toHaveBeenCalled();
+      expect(mockFetchPlayUrl).not.toHaveBeenCalled();
+    });
+
     it('should handle errors gracefully', async () => {
-      (TrackPlayer.skip as jest.Mock).mockRejectedValueOnce(
-        new Error('Skip failed'),
+      (TrackPlayer.getQueue as jest.Mock).mockRejectedValueOnce(
+        new Error('Queue error'),
       );
 
       await expect(PlayerService.playTrack(0)).resolves.not.toThrow();
@@ -222,7 +247,7 @@ describe('PlayerService', () => {
 
   describe('playSong', () => {
     it('should play existing song from queue', async () => {
-      (TrackPlayer.getQueue as jest.Mock).mockResolvedValueOnce([
+      (TrackPlayer.getQueue as jest.Mock).mockResolvedValue([
         mockTrack,
         { id: mockSong2.id },
       ]);
@@ -232,7 +257,6 @@ describe('PlayerService', () => {
       expect(TrackPlayer.getQueue).toHaveBeenCalled();
       expect(TrackPlayer.skip).toHaveBeenCalledWith(0);
       expect(TrackPlayer.play).toHaveBeenCalled();
-      expect(mockFetchPlayUrl).not.toHaveBeenCalled();
     });
 
     it('should add and play new song not in queue', async () => {
@@ -407,14 +431,32 @@ describe('PlayerService', () => {
   });
 
   describe('skipToNext', () => {
-    it('should skip to next track', async () => {
+    it('should resolve and play next track', async () => {
+      (TrackPlayer.getQueue as jest.Mock).mockResolvedValue([
+        mockTrack,
+        { id: mockSong2.id, url: 'https://example.com/audio2.mp3' },
+      ]);
+      (TrackPlayer.getActiveTrackIndex as jest.Mock).mockResolvedValueOnce(0);
+
       await PlayerService.skipToNext();
 
-      expect(TrackPlayer.skipToNext).toHaveBeenCalled();
+      expect(TrackPlayer.skip).toHaveBeenCalledWith(1);
+      expect(TrackPlayer.play).toHaveBeenCalled();
+    });
+
+    it('should do nothing when no active track', async () => {
+      (TrackPlayer.getQueue as jest.Mock).mockResolvedValueOnce([mockTrack]);
+      (TrackPlayer.getActiveTrackIndex as jest.Mock).mockResolvedValueOnce(
+        undefined,
+      );
+
+      await PlayerService.skipToNext();
+
+      expect(TrackPlayer.skip).not.toHaveBeenCalled();
     });
 
     it('should handle errors gracefully', async () => {
-      (TrackPlayer.skipToNext as jest.Mock).mockRejectedValueOnce(
+      (TrackPlayer.getQueue as jest.Mock).mockRejectedValueOnce(
         new Error('Error'),
       );
 
@@ -423,14 +465,34 @@ describe('PlayerService', () => {
   });
 
   describe('skipToPrevious', () => {
-    it('should skip to previous track', async () => {
+    it('should resolve and play previous track', async () => {
+      (TrackPlayer.getQueue as jest.Mock).mockResolvedValue([
+        { id: mockSong2.id, url: 'https://example.com/audio2.mp3' },
+        mockTrack,
+      ]);
+      (TrackPlayer.getActiveTrackIndex as jest.Mock).mockResolvedValueOnce(1);
+
       await PlayerService.skipToPrevious();
 
-      expect(TrackPlayer.skipToPrevious).toHaveBeenCalled();
+      expect(TrackPlayer.skip).toHaveBeenCalledWith(0);
+      expect(TrackPlayer.play).toHaveBeenCalled();
+    });
+
+    it('should wrap to last track when at beginning', async () => {
+      (TrackPlayer.getQueue as jest.Mock).mockResolvedValue([
+        mockTrack,
+        { id: mockSong2.id, url: 'https://example.com/audio2.mp3' },
+      ]);
+      (TrackPlayer.getActiveTrackIndex as jest.Mock).mockResolvedValueOnce(0);
+
+      await PlayerService.skipToPrevious();
+
+      expect(TrackPlayer.skip).toHaveBeenCalledWith(1);
+      expect(TrackPlayer.play).toHaveBeenCalled();
     });
 
     it('should handle errors gracefully', async () => {
-      (TrackPlayer.skipToPrevious as jest.Mock).mockRejectedValueOnce(
+      (TrackPlayer.getQueue as jest.Mock).mockRejectedValueOnce(
         new Error('Error'),
       );
 
