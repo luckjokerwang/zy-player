@@ -1,7 +1,7 @@
 {
   "name": "ZiyunPlayer",
   "displayName": "子云音播",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "子云音播 - B站第三方音频播放器 | Ziyun Player - Bilibili Audio Player",
   "repository": {
     "type": "git",
