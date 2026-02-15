@@ -72,6 +72,9 @@
     "react-test-renderer": "19.2.0",
     "typescript": "^5.8.3"
   },
+  "overrides": {
+    "qs": "^6.15.0"
+  },
   "engines": {
     "node": ">=20"
   }
