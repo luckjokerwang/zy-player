@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { LyricDisplay } from '../components/LyricDisplay';
 import { COLORS } from '../utils/constants';
@@ -11,7 +11,10 @@ interface LyricScreenProps {
 export const LyricScreen: React.FC<LyricScreenProps> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
         <Icon name="arrow-back" size={24} color={COLORS.text} />
       </TouchableOpacity>
       <LyricDisplay />

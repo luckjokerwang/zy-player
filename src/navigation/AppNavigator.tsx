@@ -31,9 +31,9 @@ const TabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused: _focused, color, size }) => {
           let iconName = 'home';
-          
+
           if (route.name === 'HomeTab') {
             iconName = 'search';
           } else if (route.name === 'FavTab') {
@@ -41,7 +41,7 @@ const TabNavigator = () => {
           } else if (route.name === 'SettingsTab') {
             iconName = 'settings';
           }
-          
+
           return <Icon name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: COLORS.primary,
@@ -53,18 +53,18 @@ const TabNavigator = () => {
         headerShown: false,
       })}
     >
-      <Tab.Screen 
-        name="HomeTab" 
+      <Tab.Screen
+        name="HomeTab"
         component={HomeScreen}
         options={{ tabBarLabel: '搜索' }}
       />
-      <Tab.Screen 
-        name="FavTab" 
+      <Tab.Screen
+        name="FavTab"
         component={FavScreen}
         options={{ tabBarLabel: '歌单' }}
       />
-      <Tab.Screen 
-        name="SettingsTab" 
+      <Tab.Screen
+        name="SettingsTab"
         component={SettingsScreen}
         options={{ tabBarLabel: '设置' }}
       />
@@ -82,22 +82,22 @@ export const AppNavigator: React.FC = () => {
         }}
       >
         <Stack.Screen name="Main" component={TabNavigator} />
-        <Stack.Screen 
-          name="Player" 
+        <Stack.Screen
+          name="Player"
           component={PlayerScreen}
           options={{
             animation: 'slide_from_bottom',
           }}
         />
-        <Stack.Screen 
-          name="Lyric" 
+        <Stack.Screen
+          name="Lyric"
           component={LyricScreen}
           options={{
             animation: 'slide_from_right',
           }}
         />
-        <Stack.Screen 
-          name="Queue" 
+        <Stack.Screen
+          name="Queue"
           component={QueueScreen}
           options={{
             animation: 'slide_from_right',
