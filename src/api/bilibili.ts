@@ -1,14 +1,18 @@
-import { API } from '../utils/constants';
-import { Song, VideoInfo, LyricOption } from '../utils/types';
+import { API, BILIBILI_HEADERS } from '../utils/constants';
+import {
+  Song,
+  VideoInfo,
+  LyricOption,
+  BilibiliVideoData,
+  BilibiliPage,
+  BilibiliArchive,
+  BilibiliMedia,
+  QQSearchItem,
+  QQSearchResultItem,
+} from '../utils/types';
 import { signWbiParams } from '../utils/wbi';
 
-// B站API请求需要的headers
-const BILIBILI_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  'Referer': 'https://www.bilibili.com',
-};
-
-const createVideoInfo = (data: any, bvid: string): VideoInfo => ({
+const createVideoInfo = (data: BilibiliVideoData, bvid: string): VideoInfo => ({
   title: data.title,
   desc: data.desc,
   videoCount: data.videos,
@@ -17,14 +21,16 @@ const createVideoInfo = (data: any, bvid: string): VideoInfo => ({
     name: data.owner.name,
     mid: data.owner.mid.toString(),
   },
-  pages: data.pages.map((page: any) => ({
+  pages: data.pages.map((page: BilibiliPage) => ({
     bvid: bvid,
     part: page.part,
     cid: page.cid.toString(),
   })),
 });
 
-export const fetchVideoInfo = async (bvid: string): Promise<VideoInfo | null> => {
+export const fetchVideoInfo = async (
+  bvid: string,
+): Promise<VideoInfo | null> => {
   try {
     const response = await fetch(API.VIDEO_INFO.replace('{bvid}', bvid), {
       headers: BILIBILI_HEADERS,
@@ -41,7 +47,10 @@ export const fetchVideoInfo = async (bvid: string): Promise<VideoInfo | null> =>
   }
 };
 
-export const fetchPlayUrl = async (bvid: string, cid: string): Promise<string | null> => {
+export const fetchPlayUrl = async (
+  bvid: string,
+  cid: string,
+): Promise<string | null> => {
   try {
     const params = {
       bvid: bvid,
@@ -51,18 +60,20 @@ export const fetchPlayUrl = async (bvid: string, cid: string): Promise<string | 
       fnver: 0,
       fourk: 1,
     };
-    
+
     const signedQuery = await signWbiParams(params);
     const url = `${API.PLAY_URL_BASE}?${signedQuery}`;
-    
+
     console.log('Fetching play URL with WBI sign:', url);
-    
+
     const response = await fetch(url, {
       headers: BILIBILI_HEADERS,
     });
     const text = await response.text();
     if (text.startsWith('<') || text.startsWith('<!')) {
-      console.error('fetchPlayUrl returned HTML instead of JSON - API blocked or network issue');
+      console.error(
+        'fetchPlayUrl returned HTML instead of JSON - API blocked or network issue',
+      );
       return null;
     }
     const json = JSON.parse(text);
@@ -154,17 +165,22 @@ const getSongsFromVideoInfos = (infos: (VideoInfo | null)[]): Song[] => {
   return songs;
 };
 
-export const fetchBiliSeriesList = async (mid: string, sid: string): Promise<Song[]> => {
+export const fetchBiliSeriesList = async (
+  mid: string,
+  sid: string,
+): Promise<Song[]> => {
   try {
-    const url = API.BILI_SERIES.replace('{mid}', mid).replace('{sid}', sid).replace('{pn}', '0');
+    const url = API.BILI_SERIES.replace('{mid}', mid)
+      .replace('{sid}', sid)
+      .replace('{pn}', '0');
     const response = await fetch(url, {
       headers: BILIBILI_HEADERS,
     });
     const json = await response.json();
     if (json.code !== 0) return [];
 
-    const videoInfoPromises = json.data.archives.map((archive: any) =>
-      fetchVideoInfo(archive.bvid)
+    const videoInfoPromises = json.data.archives.map(
+      (archive: BilibiliArchive) => fetchVideoInfo(archive.bvid),
     );
     const videoInfos = await Promise.all(videoInfoPromises);
     return getSongsFromVideoInfos(videoInfos);
@@ -174,9 +190,14 @@ export const fetchBiliSeriesList = async (mid: string, sid: string): Promise<Son
   }
 };
 
-export const fetchBiliCollectionList = async (mid: string, sid: string): Promise<Song[]> => {
+export const fetchBiliCollectionList = async (
+  mid: string,
+  sid: string,
+): Promise<Song[]> => {
   try {
-    const firstPageUrl = API.BILI_COLLECTION.replace('{mid}', mid).replace('{sid}', sid).replace('{pn}', '1');
+    const firstPageUrl = API.BILI_COLLECTION.replace('{mid}', mid)
+      .replace('{sid}', sid)
+      .replace('{pn}', '1');
     const response = await fetch(firstPageUrl, {
       headers: BILIBILI_HEADERS,
     });
@@ -187,16 +208,22 @@ export const fetchBiliCollectionList = async (mid: string, sid: string): Promise
     const pageSize = json.data.page.page_size;
     const totalPages = Math.ceil(mediaCount / pageSize);
 
-    const allBvids: string[] = json.data.archives.map((archive: any) => archive.bvid);
+    const allBvids: string[] = json.data.archives.map(
+      (archive: BilibiliArchive) => archive.bvid,
+    );
 
     for (let page = 2; page <= totalPages; page++) {
-      const pageUrl = API.BILI_COLLECTION.replace('{mid}', mid).replace('{sid}', sid).replace('{pn}', page.toString());
+      const pageUrl = API.BILI_COLLECTION.replace('{mid}', mid)
+        .replace('{sid}', sid)
+        .replace('{pn}', page.toString());
       const pageResponse = await fetch(pageUrl, {
         headers: BILIBILI_HEADERS,
       });
       const pageJson = await pageResponse.json();
       if (pageJson.code === 0) {
-        pageJson.data.archives.forEach((archive: any) => allBvids.push(archive.bvid));
+        pageJson.data.archives.forEach((archive: BilibiliArchive) =>
+          allBvids.push(archive.bvid),
+        );
       }
     }
 
@@ -211,7 +238,10 @@ export const fetchBiliCollectionList = async (mid: string, sid: string): Promise
 
 export const fetchFavList = async (mid: string): Promise<Song[]> => {
   try {
-    const firstPageUrl = API.FAV_LIST.replace('{mid}', mid).replace('{pn}', '1');
+    const firstPageUrl = API.FAV_LIST.replace('{mid}', mid).replace(
+      '{pn}',
+      '1',
+    );
     const response = await fetch(firstPageUrl, {
       headers: BILIBILI_HEADERS,
     });
@@ -221,16 +251,22 @@ export const fetchFavList = async (mid: string): Promise<Song[]> => {
     const mediaCount = json.data.info.media_count;
     const totalPages = Math.ceil(mediaCount / 20);
 
-    const allBvids: string[] = json.data.medias?.map((media: any) => media.bvid) || [];
+    const allBvids: string[] =
+      json.data.medias?.map((media: BilibiliMedia) => media.bvid) || [];
 
     for (let page = 2; page <= totalPages; page++) {
-      const pageUrl = API.FAV_LIST.replace('{mid}', mid).replace('{pn}', page.toString());
+      const pageUrl = API.FAV_LIST.replace('{mid}', mid).replace(
+        '{pn}',
+        page.toString(),
+      );
       const pageResponse = await fetch(pageUrl, {
         headers: BILIBILI_HEADERS,
       });
       const pageJson = await pageResponse.json();
       if (pageJson.code === 0 && pageJson.data?.medias) {
-        pageJson.data.medias.forEach((media: any) => allBvids.push(media.bvid));
+        pageJson.data.medias.forEach((media: BilibiliMedia) =>
+          allBvids.push(media.bvid),
+        );
       }
     }
 
@@ -243,16 +279,20 @@ export const fetchFavList = async (mid: string): Promise<Song[]> => {
   }
 };
 
-export const searchLyricOptions = async (searchKey: string): Promise<LyricOption[]> => {
+export const searchLyricOptions = async (
+  searchKey: string,
+): Promise<LyricOption[]> => {
   if (!searchKey) return [];
 
   try {
-    const response = await fetch(API.QQ_SEARCH.replace('{KeyWord}', encodeURIComponent(searchKey)));
+    const response = await fetch(
+      API.QQ_SEARCH.replace('{KeyWord}', encodeURIComponent(searchKey)),
+    );
     const json = await response.json();
     const data = json.data?.song?.itemlist || [];
 
     if (data.length > 0) {
-      return data.map((item: any, index: number) => ({
+      return data.map((item: QQSearchItem, index: number) => ({
         key: item.mid,
         songMid: item.mid,
         label: `${index}. ${item.name} / ${item.singer}`,
@@ -266,7 +306,9 @@ export const searchLyricOptions = async (searchKey: string): Promise<LyricOption
   }
 };
 
-const searchLyricOptionsFallback = async (searchKey: string): Promise<LyricOption[]> => {
+const searchLyricOptionsFallback = async (
+  searchKey: string,
+): Promise<LyricOption[]> => {
   try {
     const body = {
       comm: { ct: '19', cv: '1859', uin: '0' },
@@ -292,7 +334,7 @@ const searchLyricOptionsFallback = async (searchKey: string): Promise<LyricOptio
     const json = await response.json();
     const data = json.req?.data?.body?.song?.list || [];
 
-    return data.map((item: any, index: number) => ({
+    return data.map((item: QQSearchResultItem, index: number) => ({
       key: item.mid,
       songMid: item.mid,
       label: `${index}. ${item.name} / ${item.singer?.[0]?.name || 'Unknown'}`,
@@ -326,7 +368,7 @@ export const fetchLyric = async (songMid: string): Promise<string> => {
   }
 };
 
-export const extractSongName = (name: string, artist?: string): string => {
+export const extractSongName = (name: string, _artist?: string): string => {
   const nameReg = /《.*》/;
   const result = nameReg.exec(name);
   if (result && result.length > 0) {
