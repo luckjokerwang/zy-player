@@ -22,7 +22,8 @@ export const SearchBar: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isAddingAll, setIsAddingAll] = useState(false);
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
-  const { setSearchList, playSong, addToQueue, addSongToFavList, favLists } = usePlayer();
+  const { setSearchList, playSong, addToQueue, addSongToFavList, favLists } =
+    usePlayer();
 
   const handleSearch = async () => {
     if (!searchText.trim()) return;
@@ -42,7 +43,7 @@ export const SearchBar: React.FC = () => {
       if (result.error) {
         Alert.alert('搜索提示', result.error);
       }
-    } catch (error) {
+    } catch {
       Alert.alert('搜索失败', '请检查网络连接或输入格式');
     } finally {
       setIsLoading(false);
@@ -67,20 +68,28 @@ export const SearchBar: React.FC = () => {
     Alert.alert(
       '添加到歌单',
       '选择要添加到的歌单',
-      favLists.map(fav => ({
-        text: fav.info.title,
-        onPress: () => addSongToFavList(fav.info.id, song),
-      })).concat([{ text: '取消', style: 'cancel' } as any]),
+      favLists
+        .map(fav => ({
+          text: fav.info.title,
+          onPress: () => addSongToFavList(fav.info.id, song),
+        }))
+        .concat([{ text: '取消', style: 'cancel' } as any]),
     );
   };
 
   const handlePlayAll = async () => {
     if (searchResult && searchResult.songs.length > 0) {
       setIsAddingAll(true);
-      ToastAndroid.show(`正在添加 ${searchResult.songs.length} 首歌曲...`, ToastAndroid.SHORT);
+      ToastAndroid.show(
+        `正在添加 ${searchResult.songs.length} 首歌曲...`,
+        ToastAndroid.SHORT,
+      );
       try {
         await addToQueue(searchResult.songs);
-        ToastAndroid.show(`已添加 ${searchResult.songs.length} 首歌曲到播放队列`, ToastAndroid.SHORT);
+        ToastAndroid.show(
+          `已添加 ${searchResult.songs.length} 首歌曲到播放队列`,
+          ToastAndroid.SHORT,
+        );
       } finally {
         setIsAddingAll(false);
       }
@@ -119,8 +128,8 @@ export const SearchBar: React.FC = () => {
               {searchResult.title} ({searchResult.songs.length}首)
             </Text>
             {searchResult.songs.length > 0 && (
-              <TouchableOpacity 
-                onPress={handlePlayAll} 
+              <TouchableOpacity
+                onPress={handlePlayAll}
                 style={styles.playAllButton}
                 disabled={isAddingAll}
               >
@@ -138,7 +147,7 @@ export const SearchBar: React.FC = () => {
 
           <FlatList
             data={searchResult.songs}
-            keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id}
             renderItem={({ item }) => (
               <SongItem
                 song={item}
@@ -156,11 +165,18 @@ export const SearchBar: React.FC = () => {
       {!searchResult && (
         <View style={styles.helpContainer}>
           <Text style={styles.helpTitle}>搜索帮助</Text>
-          <Text style={styles.helpText}>• BVID: 视频的BV号 (如 BV1wr4y1v7TA)</Text>
-          <Text style={styles.helpText}>• 收藏夹ID: 需公开 (如 1793186881)</Text>
+          <Text style={styles.helpText}>
+            • BVID: 视频的BV号 (如 BV1wr4y1v7TA)
+          </Text>
+          <Text style={styles.helpText}>
+            • 收藏夹ID: 需公开 (如 1793186881)
+          </Text>
           <Text style={styles.helpText}>• 合集: 完整URL</Text>
-          <Text style={styles.helpText}>  - channel/collectiondetail?sid=xxx</Text>
-          <Text style={styles.helpText}>  - channel/seriesdetail?sid=xxx</Text>
+          <Text style={styles.helpText}>
+            {' '}
+            - channel/collectiondetail?sid=xxx
+          </Text>
+          <Text style={styles.helpText}> - channel/seriesdetail?sid=xxx</Text>
         </View>
       )}
     </View>

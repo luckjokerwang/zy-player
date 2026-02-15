@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,11 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { usePlayer } from '../contexts/PlayerContext';
-import { searchLyricOptions, fetchLyric, extractSongName } from '../api/bilibili';
+import {
+  searchLyricOptions,
+  fetchLyric,
+  extractSongName,
+} from '../api/bilibili';
 import { storageManager } from '../storage/StorageManager';
 import { LyricOption } from '../utils/types';
 import { COLORS } from '../utils/constants';
@@ -51,45 +55,53 @@ export const LyricDisplay: React.FC = () => {
   const [lyricLines, setLyricLines] = useState<LyricLine[]>([]);
   const [lyricOffset, setLyricOffset] = useState<number>(0);
   const [lyricOptions, setLyricOptions] = useState<LyricOption[]>([]);
-  const [selectedOption, setSelectedOption] = useState<LyricOption | null>(null);
+  const [selectedOption, setSelectedOption] = useState<LyricOption | null>(
+    null,
+  );
   const [searchKey, setSearchKey] = useState<string>('');
   const [showOptions, setShowOptions] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentLineIndex, setCurrentLineIndex] = useState(-1);
 
-  useEffect(() => {
-    if (currentSong) {
-      loadLyric();
-    }
-  }, [currentSong]);
+  const selectLyricOption = useCallback(
+    async (option: LyricOption) => {
+      setSelectedOption(option);
+      setShowOptions(false);
 
-  useEffect(() => {
-    setLyricLines(parseLrc(lyric));
-  }, [lyric]);
+      const lrc = await fetchLyric(option.songMid);
+      setLyric(lrc);
 
-  useEffect(() => {
-    if (lyricLines.length === 0) return;
+      if (currentSong) {
+        await storageManager.setLyricDetail(currentSong.id, {
+          songMid: option.songMid,
+          label: option.label,
+        });
+      }
+    },
+    [currentSong],
+  );
 
-    const adjustedPosition = position + lyricOffset / 1000;
-    let index = lyricLines.findIndex((line, i) => {
-      const nextLine = lyricLines[i + 1];
-      return line.time <= adjustedPosition && (!nextLine || nextLine.time > adjustedPosition);
-    });
+  const searchForLyric = useCallback(
+    async (key: string) => {
+      if (!key) return;
 
-    if (index !== currentLineIndex && index >= 0) {
-      setCurrentLineIndex(index);
-      scrollViewRef.current?.scrollTo({
-        y: index * 40 - screenHeight / 4,
-        animated: true,
-      });
-    }
-  }, [position, lyricLines, lyricOffset]);
+      const options = await searchLyricOptions(key);
+      setLyricOptions(options);
 
-  const loadLyric = async () => {
+      if (options.length > 0) {
+        await selectLyricOption(options[0]);
+      } else {
+        setLyric('[00:00.000] 无法找到歌词，请手动搜索');
+      }
+    },
+    [selectLyricOption],
+  );
+
+  const loadLyric = useCallback(async () => {
     if (!currentSong) return;
 
     const detail = await storageManager.getLyricDetail(currentSong.id);
-    
+
     if (detail) {
       setLyricOffset(detail.lrcOffset);
       const lrc = await fetchLyric(detail.lrc.songMid);
@@ -100,35 +112,41 @@ export const LyricDisplay: React.FC = () => {
       setSearchKey(songName);
       await searchForLyric(songName);
     }
-  };
+  }, [currentSong, searchForLyric]);
 
-  const searchForLyric = async (key: string) => {
-    if (!key) return;
-
-    const options = await searchLyricOptions(key);
-    setLyricOptions(options);
-
-    if (options.length > 0) {
-      await selectLyricOption(options[0]);
-    } else {
-      setLyric('[00:00.000] 无法找到歌词，请手动搜索');
-    }
-  };
-
-  const selectLyricOption = async (option: LyricOption) => {
-    setSelectedOption(option);
-    setShowOptions(false);
-
-    const lrc = await fetchLyric(option.songMid);
-    setLyric(lrc);
-
+  useEffect(() => {
     if (currentSong) {
-      await storageManager.setLyricDetail(currentSong.id, {
-        songMid: option.songMid,
-        label: option.label,
+      loadLyric();
+    }
+  }, [currentSong, loadLyric]);
+
+  useEffect(() => {
+    setLyricLines(parseLrc(lyric));
+  }, [lyric]);
+
+  // Intentionally exclude 'currentLineIndex' from dependencies to avoid infinite loops.
+  // 'currentLineIndex' is updated inside this effect, so including it would cause re-runs.
+  useEffect(() => {
+    if (lyricLines.length === 0) return;
+
+    const adjustedPosition = position + lyricOffset / 1000;
+    let index = lyricLines.findIndex((line, i) => {
+      const nextLine = lyricLines[i + 1];
+      return (
+        line.time <= adjustedPosition &&
+        (!nextLine || nextLine.time > adjustedPosition)
+      );
+    });
+
+    if (index !== currentLineIndex && index >= 0) {
+      setCurrentLineIndex(index);
+      scrollViewRef.current?.scrollTo({
+        y: index * 40 - screenHeight / 4,
+        animated: true,
       });
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [position, lyricLines, lyricOffset]);
 
   const handleOffsetChange = async (offset: number) => {
     setLyricOffset(offset);
@@ -153,7 +171,7 @@ export const LyricDisplay: React.FC = () => {
   return (
     <View style={styles.container}>
       <Image source={{ uri: currentSong.cover }} style={styles.cover} />
-      
+
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -171,11 +189,17 @@ export const LyricDisplay: React.FC = () => {
       <View style={styles.offsetContainer}>
         <Text style={styles.offsetLabel}>歌词偏移 (ms)</Text>
         <View style={styles.offsetControls}>
-          <TouchableOpacity onPress={() => handleOffsetChange(lyricOffset - 500)} style={styles.offsetBtn}>
+          <TouchableOpacity
+            onPress={() => handleOffsetChange(lyricOffset - 500)}
+            style={styles.offsetBtn}
+          >
             <Icon name="remove" size={20} color={COLORS.text} />
           </TouchableOpacity>
           <Text style={styles.offsetValue}>{lyricOffset}</Text>
-          <TouchableOpacity onPress={() => handleOffsetChange(lyricOffset + 500)} style={styles.offsetBtn}>
+          <TouchableOpacity
+            onPress={() => handleOffsetChange(lyricOffset + 500)}
+            style={styles.offsetBtn}
+          >
             <Icon name="add" size={20} color={COLORS.text} />
           </TouchableOpacity>
         </View>
@@ -185,7 +209,7 @@ export const LyricDisplay: React.FC = () => {
         <View style={styles.optionsContainer}>
           <FlatList
             data={lyricOptions}
-            keyExtractor={(item) => item.key}
+            keyExtractor={item => item.key}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={[
@@ -194,7 +218,9 @@ export const LyricDisplay: React.FC = () => {
                 ]}
                 onPress={() => selectLyricOption(item)}
               >
-                <Text style={styles.optionText} numberOfLines={1}>{item.label}</Text>
+                <Text style={styles.optionText} numberOfLines={1}>
+                  {item.label}
+                </Text>
               </TouchableOpacity>
             )}
             style={styles.optionsList}
@@ -209,7 +235,11 @@ export const LyricDisplay: React.FC = () => {
         <Text style={styles.toggleOptionsText}>
           {showOptions ? '收起选项' : '选择歌词'}
         </Text>
-        <Icon name={showOptions ? 'expand-less' : 'expand-more'} size={20} color={COLORS.primary} />
+        <Icon
+          name={showOptions ? 'expand-less' : 'expand-more'}
+          size={20}
+          color={COLORS.primary}
+        />
       </TouchableOpacity>
 
       <ScrollView
