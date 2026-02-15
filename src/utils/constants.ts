@@ -1,21 +1,28 @@
 // Bilibili API URLs
 export const API = {
   PLAY_URL_BASE: 'https://api.bilibili.com/x/player/wbi/playurl',
-  PLAY_URL: 'https://api.bilibili.com/x/player/playurl?cid={cid}&bvid={bvid}&qn=64&fnval=16',
+  PLAY_URL:
+    'https://api.bilibili.com/x/player/playurl?cid={cid}&bvid={bvid}&qn=64&fnval=16',
   // BVID转CID
-  BVID_TO_CID: 'https://api.bilibili.com/x/player/pagelist?bvid={bvid}&jsonp=jsonp',
+  BVID_TO_CID:
+    'https://api.bilibili.com/x/player/pagelist?bvid={bvid}&jsonp=jsonp',
   // 视频基本信息
   VIDEO_INFO: 'https://api.bilibili.com/x/web-interface/view?bvid={bvid}',
   // 用户频道系列
-  BILI_SERIES: 'https://api.bilibili.com/x/series/archives?mid={mid}&series_id={sid}&only_normal=true&sort=desc&pn={pn}&ps=30',
+  BILI_SERIES:
+    'https://api.bilibili.com/x/series/archives?mid={mid}&series_id={sid}&only_normal=true&sort=desc&pn={pn}&ps=30',
   // 用户频道合集
-  BILI_COLLECTION: 'https://api.bilibili.com/x/polymer/space/seasons_archives_list?mid={mid}&season_id={sid}&sort_reverse=false&page_num={pn}&page_size=30',
+  BILI_COLLECTION:
+    'https://api.bilibili.com/x/polymer/space/seasons_archives_list?mid={mid}&season_id={sid}&sort_reverse=false&page_num={pn}&page_size=30',
   // 收藏夹列表
-  FAV_LIST: 'https://api.bilibili.com/x/v3/fav/resource/list?media_id={mid}&pn={pn}&ps=20&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp',
+  FAV_LIST:
+    'https://api.bilibili.com/x/v3/fav/resource/list?media_id={mid}&pn={pn}&ps=20&keyword=&order=mtime&type=0&tid=0&platform=web&jsonp=jsonp',
   // QQ音乐歌词搜索
-  QQ_SEARCH: 'https://c.y.qq.com/splcloud/fcgi-bin/smartbox_new.fcg?key={KeyWord}',
+  QQ_SEARCH:
+    'https://c.y.qq.com/splcloud/fcgi-bin/smartbox_new.fcg?key={KeyWord}',
   // QQ音乐歌词获取
-  QQ_LYRIC: 'https://i.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_new.fcg?songmid={SongMid}&g_tk=5381&format=json&inCharset=utf8&outCharset=utf-8&nobase64=1',
+  QQ_LYRIC:
+    'https://i.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_new.fcg?songmid={SongMid}&g_tk=5381&format=json&inCharset=utf8&outCharset=utf-8&nobase64=1',
   // QQ音乐搜索备用接口
   QQ_SEARCH_POST: 'https://u.y.qq.com/cgi-bin/musicu.fcg',
 };
@@ -40,7 +47,31 @@ export const PLAY_MODES = {
   LIST_LOOP: 'listLoop',
 } as const;
 
-export type PlayMode = typeof PLAY_MODES[keyof typeof PLAY_MODES];
+export type PlayMode = (typeof PLAY_MODES)[keyof typeof PLAY_MODES];
+
+// B站请求Headers
+export const BILIBILI_HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  Referer: 'https://www.bilibili.com',
+};
+
+// 占位URL工具 - 用于懒加载真实播放地址
+const PLACEHOLDER_HOST = 'placeholder.bilibili';
+
+export const createPlaceholderUrl = (bvid: string, cid: string): string =>
+  `https://${PLACEHOLDER_HOST}/${bvid}/${cid}`;
+
+export const isPlaceholderUrl = (url: string | undefined): boolean =>
+  !!url && url.indexOf(PLACEHOLDER_HOST) !== -1;
+
+export const parsePlaceholderUrl = (
+  url: string,
+): { bvid: string; cid: string } | null => {
+  if (!isPlaceholderUrl(url)) return null;
+  const parts = url.split('/');
+  return { bvid: parts[3], cid: parts[4] };
+};
 
 // 主题颜色
 export const COLORS = {
