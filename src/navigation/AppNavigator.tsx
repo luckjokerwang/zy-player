@@ -1,5 +1,9 @@
 import React from 'react';
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  DefaultTheme,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -14,6 +18,8 @@ import { COLORS } from '../utils/constants';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+export const navigationRef = createNavigationContainerRef();
 
 const DarkTheme = {
   ...DefaultTheme,
@@ -74,7 +80,7 @@ const TabNavigator = () => {
 
 export const AppNavigator: React.FC = () => {
   return (
-    <NavigationContainer theme={DarkTheme}>
+    <NavigationContainer theme={DarkTheme} ref={navigationRef}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,

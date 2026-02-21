@@ -1,7 +1,7 @@
 {
   "name": "ZiyunPlayer",
   "displayName": "子云音播",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "子云音播 - B站第三方音频播放器 | Ziyun Player - Bilibili Audio Player",
   "repository": {
     "type": "git",
@@ -24,7 +24,8 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "npx patch-package"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",

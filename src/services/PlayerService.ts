@@ -269,7 +269,7 @@ export const togglePlayPause = async (): Promise<void> => {
       if (activeIndex !== undefined && activeIndex !== null) {
         const resolved = await resolveTrackUrl(activeIndex);
         if (resolved) {
-          await TrackPlayer.skip(activeIndex);
+          // URL已解析，直接play()，避免skip()重置position
           await TrackPlayer.play();
         } else {
           ToastAndroid.show('无法获取播放地址', ToastAndroid.SHORT);

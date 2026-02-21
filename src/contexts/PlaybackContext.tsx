@@ -27,6 +27,7 @@ export interface PlaybackContextType {
   playMode: PlayMode;
   isLoading: boolean;
   isInitialized: boolean;
+  hasSongs: boolean;
   error: string | null;
 
   playSong: (song: Song) => Promise<void>;
@@ -56,6 +57,7 @@ export const PlaybackProvider: React.FC<{ children: ReactNode }> = ({
   const [playMode, setPlayModeState] = useState<PlayMode>(PLAY_MODES.ORDER);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [hasSongs, setHasSongs] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const playbackState = usePlaybackState();
@@ -93,10 +95,12 @@ export const PlaybackProvider: React.FC<{ children: ReactNode }> = ({
 
       const lastPlayList = await storageManager.getLastPlayList();
       if (lastPlayList.length > 0) {
+        setHasSongs(true);
         setPlayingList(lastPlayList);
         await PlayerService.addSongsToQueueFast(lastPlayList, true);
         await PlayerService.playTrack(0);
       } else if (lists.length > 0 && lists[0].songList.length > 0) {
+        setHasSongs(true);
         setPlayingList(lists[0].songList);
         await PlayerService.addSongsToQueueFast(lists[0].songList, true);
         await PlayerService.playTrack(0);
@@ -182,6 +186,7 @@ export const PlaybackProvider: React.FC<{ children: ReactNode }> = ({
     playMode,
     isLoading,
     isInitialized,
+    hasSongs,
     error,
 
     playSong,

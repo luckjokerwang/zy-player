@@ -7,49 +7,56 @@ import { ToastAndroid } from 'react-native';
 import * as PlayerService from './PlayerService';
 
 export default async function PlaybackService() {
-  ToastAndroid.show('[PlaybackService] 启动', ToastAndroid.SHORT);
+  console.log('[PlaybackService] Registered');
 
   TrackPlayer.addEventListener(Event.RemotePlay, async () => {
-    ToastAndroid.show('RemotePlay', ToastAndroid.SHORT);
-    await PlayerService.togglePlayPause();
+    console.log('[PlaybackService] RemotePlay');
+    ToastAndroid.show('通知中心：播放', ToastAndroid.SHORT);
+    await TrackPlayer.play();
   });
 
-  TrackPlayer.addEventListener(Event.RemotePause, () => {
-    ToastAndroid.show('RemotePause', ToastAndroid.SHORT);
-    TrackPlayer.pause();
+  TrackPlayer.addEventListener(Event.RemotePause, async () => {
+    console.log('[PlaybackService] RemotePause');
+    ToastAndroid.show('通知中心：暂停', ToastAndroid.SHORT);
+    await TrackPlayer.pause();
   });
 
-  // Android 12+ / Vivo / MIUI 设备发送合并的 PLAY_PAUSE 事件
   TrackPlayer.addEventListener(Event.RemotePlayPause, async () => {
-    ToastAndroid.show('RemotePlayPause', ToastAndroid.SHORT);
+    console.log('[PlaybackService] RemotePlayPause');
     const playbackState = await TrackPlayer.getPlaybackState();
     if (playbackState.state === State.Playing) {
-      TrackPlayer.pause();
+      ToastAndroid.show('通知中心：执行暂停', ToastAndroid.SHORT);
+      await TrackPlayer.pause();
     } else {
-      await PlayerService.togglePlayPause();
+      ToastAndroid.show('通知中心：执行播放', ToastAndroid.SHORT);
+      await TrackPlayer.play();
     }
   });
 
-  TrackPlayer.addEventListener(Event.RemoteStop, () => {
-    ToastAndroid.show('RemoteStop', ToastAndroid.SHORT);
-    TrackPlayer.stop();
+  TrackPlayer.addEventListener(Event.RemoteStop, async () => {
+    console.log('[PlaybackService] RemoteStop');
+    await TrackPlayer.stop();
   });
 
   TrackPlayer.addEventListener(Event.RemoteNext, async () => {
-    ToastAndroid.show('RemoteNext', ToastAndroid.SHORT);
+    console.log('[PlaybackService] RemoteNext');
+    ToastAndroid.show('通知中心：下一首', ToastAndroid.SHORT);
     await PlayerService.skipToNext();
   });
 
   TrackPlayer.addEventListener(Event.RemotePrevious, async () => {
-    ToastAndroid.show('RemotePrevious', ToastAndroid.SHORT);
+    console.log('[PlaybackService] RemotePrevious');
+    ToastAndroid.show('通知中心：上一首', ToastAndroid.SHORT);
     await PlayerService.skipToPrevious();
   });
 
-  TrackPlayer.addEventListener(Event.RemoteSeek, event =>
-    TrackPlayer.seekTo(event.position),
-  );
+  TrackPlayer.addEventListener(Event.RemoteSeek, async event => {
+    console.log('[PlaybackService] RemoteSeek', event.position);
+    await TrackPlayer.seekTo(event.position);
+  });
 
   TrackPlayer.addEventListener(Event.PlaybackQueueEnded, async event => {
+    console.log('[PlaybackService] PlaybackQueueEnded');
     if (event.position > 0) {
       const repeatMode = await TrackPlayer.getRepeatMode();
       if (repeatMode === RepeatMode.Off) {
@@ -63,7 +70,7 @@ export default async function PlaybackService() {
   });
 
   TrackPlayer.addEventListener(Event.PlaybackError, async event => {
-    console.error('Playback error:', event.message);
+    console.error('[PlaybackService] PlaybackError:', event.message);
     const state = await TrackPlayer.getPlaybackState();
     if (state.state === State.Error) {
       const activeIndex = await TrackPlayer.getActiveTrackIndex();

@@ -3,7 +3,7 @@
  * React Native App Entry Point
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   StatusBar,
   StyleSheet,
@@ -14,12 +14,25 @@ import {
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PlayerProvider, usePlayer } from './src/contexts/PlayerContext';
-import { AppNavigator } from './src/navigation/AppNavigator';
+import { AppNavigator, navigationRef } from './src/navigation/AppNavigator';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { COLORS } from './src/utils/constants';
 
 function AppContent() {
-  const { isInitialized, error } = usePlayer();
+  const { isInitialized, hasSongs, error } = usePlayer();
+  const didAutoNavigate = useRef(false);
+
+  useEffect(() => {
+    if (
+      isInitialized &&
+      hasSongs &&
+      !didAutoNavigate.current &&
+      navigationRef.isReady()
+    ) {
+      didAutoNavigate.current = true;
+      navigationRef.navigate('Player' as never);
+    }
+  }, [isInitialized, hasSongs]);
 
   if (error) {
     return (
